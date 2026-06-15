@@ -55,7 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         tips.forEach(tip => {
             const li = document.createElement("li");
-            li.innerHTML = `💡 ${tip}`;
+            li.textContent = `💡 ${tip}`;
             actionableTips.appendChild(li);
         });
     }
