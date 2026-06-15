@@ -1,19 +1,28 @@
-import pathlib as pt
 import hashlib
 import math
 
-fichier_original = pt.Path("/usr/share/wordlists/rockyou.txt")
-fichier_alterer = pt.Path("custom_test.txt")
+
 
 var = ['&','@','#','']
 
-with open(fichier_original,mode="r",encoding='latin-1') as src, open(fichier_alterer,mode='w',encoding='latin-1') as des :
-   for element in src:
-      mot_de_passe = element.strip()
-      for i in var :
-         nouveau_mot = mot_de_passe + i
-         mot_final = nouveau_mot + '\n'
-         des.write(mot_final)
+def fichier_mutation(fichier_original):
+   with open(fichier_original,mode="r",encoding='utf-8', errors='ignore') as src, open("fichier_alterer.txt",mode='w',encoding='utf-8') as des :
+      for element in src:
+         mot_de_passe = element.strip()
+         for i in var :
+            nouveau_mot = mot_de_passe + i
+            mot_final = nouveau_mot + '\n'
+            des.write(mot_final)
+   return "fichier_alterer.txt"
+
+
+def hashFilename(filename):
+   with open(filename, 'r',encoding='utf-8', errors='ignore' ) as f, open("fichier_hasher.txt", 'w') as g:
+      for line in f:
+         s = line.rstrip('\n')
+         digest = hashlib.md5(s.encode()).hexdigest()
+         g.write(f"{s} {digest}\n")
+   return "fichier_hasher.txt"
 
       
 #affichage
@@ -70,26 +79,36 @@ def affichage(mot_de_passe):
 #recherche dans les fichiers 
 
 def hacher_mdp_md5(mot_de_passe):
-    return hashlib.md5(mot_de_passe.encode()).hexdigest()
+   return hashlib.md5(mot_de_passe.encode()).hexdigest()
 
 def recherche_hash(mot_de_passe):
-    hash = hacher_mdp_md5(mot_de_passe)
+   hash = hacher_mdp_md5(mot_de_passe)
 
-    with open('rockyou.txt', 'r') as f:
-        for ligne in f:
-            candidat, hash_candidat = ligne.strip().split(':')
-            if hash_candidat == hash :
-                print(f"HAHAAAA ton mot de passe est '{mot_de_passe}', 😝😝😝 trouve quelque chose de mieux ")
-                return
+   with open('fichier_hasher.txt', 'r') as f:
+      for ligne in f:
+         candidat, hash_candidat = ligne.strip().split(' ')
+         if hash_candidat == hash :
+            print(f"HAHAAAA ton mot de passe est '{mot_de_passe}', 😝😝😝 trouve quelque chose de mieux ")
+            return  
     
-    with open('mutations.txt', 'r') as f:
-        for ligne in f:
-            candidat, hash_candidat = ligne.strip().split(':')
-            if hash_candidat == hash :
-                print(f"HAHAAAA ton mot de passe est '{mot_de_passe}', 😝😝😝 trouve quelque chose de mieux ")
-                return
+   with open('fichier_alterer.txt', 'r') as f:
+      for ligne in f:
+         candidat, hash_candidat = ligne.strip().split(' ')
+         if hash_candidat == hash :
+            print(f"HAHAAAA ton mot de passe est '{mot_de_passe}', 😝😝😝 trouve quelque chose de mieux ")
+            return
+         else: 
+            print("pas trouvé!")
 
-    print("Ton mot de passe a l'air robuste nous n'avons pas pu le trouver")
+   print("Ton mot de passe a l'air robuste nous n'avons pas pu le trouver")
 
 
 
+if __name__ == '__main__':
+
+   hashFile =hashFilename("mdp.txt")
+
+   
+   file_mod =hashFilename(fichier_mutation("mdp.txt"))
+
+   print(recherche_hash("23Jinshisama@"))
