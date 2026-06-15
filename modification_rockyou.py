@@ -13,50 +13,19 @@ def fichier_mutation(fichier_original):
             nouveau_mot = mot_de_passe + i
             mot_final = nouveau_mot + '\n'
             des.write(mot_final)
-   return "fichier_alterer.txt"
+   
 
 
-def hashFilename(filename,fichier_destination):
-   with open(filename, 'r',encoding='utf-8', errors='ignore' ) as f, open(fichier_destination, 'w') as g:
+def hashFilename(filename):
+   with open(filename, 'r',encoding='utf-8', errors='ignore' ) as f, open("fichier_hasher.txt", 'w') as g:
       for line in f:
          s = line.rstrip('\n')
          digest = hashlib.md5(s.encode()).hexdigest()
          g.write(f"{s}:{digest}\n")
-   return fichier_destination
+   
 
       
 #affichage
-
-def convertir_temps(temps_seconde):
-    secondes = 0
-    minutes = 0
-    heures = 0
-    jour = 0
-    mois = 0
-    annee = 0
-
-    minutes = temps_seconde // 60
-    secondes = temps_seconde % 60
-    if minutes >=60:
-        heures = minutes //60
-        minutes = minutes % 60
-       
-        if heures >=24:
-            jour = heures //24
-            heures = heures % 24
-
-            if jour >=30:
-                mois = jour // 30
-                jour = jour % 30
-
-                if mois >=12:
-                    annee = mois //12
-                    mois = mois % 12
-
-    
-    return f"{annee} ans {mois} mois {jour} jours {heures}heures {minutes} minutes {secondes} secondes "
-
-
 
 def affichage(mot_de_passe):
     longueur = len(mot_de_passe)
@@ -102,10 +71,9 @@ def affichage(mot_de_passe):
     print(f"L'entropie estimée de votre mot de passe est: {entropie}")
 
     print("Le temps de cassage estimé est : ")
-    print(f"Pour un PC portable normal : {convertir_temps(temps_cassage_CPU)}")
-    print(f"Pour une station de gaming avec GPU(RTX 4090): {convertir_temps(temps_cassage_GPU)}")
-    print(f"Pour un cluster d'attaquant professionnel : {convertir_temps(temps_cassage_cluster)}")
-            
+    print(f"Pour un PC portable normal : {temps_cassage_CPU}")
+    print(f"Pour une station de gaming avec GPU(RTX 4090): {temps_cassage_GPU}")
+    print(f"Pour un cluster d'attaquant professionnel : {temps_cassage_cluster}")
             
 
 #recherche dans les fichiers 
@@ -113,37 +81,30 @@ def affichage(mot_de_passe):
 def hacher_mdp_md5(mot_de_passe):
    return hashlib.md5(mot_de_passe.encode()).hexdigest()
 
-def recherche_hash(mot_de_passe,file):
-    hash = hacher_mdp_md5(mot_de_passe)
+def recherche_hash(mot_de_passe):
+   hash = hacher_mdp_md5(mot_de_passe)
 
-    with open(file, 'r') as f:
+   with open('fichier_hasher_simple.txt', 'r') as f:
       for ligne in f:
-         candidat, hash_candidat = ligne.strip().rsplit(':',1)
+         candidat, hash_candidat = ligne.strip().split(':',1)
          if hash_candidat == hash :
             print(f"HAHAAAA ton mot de passe est '{mot_de_passe}', 😝😝😝 trouve quelque chose de mieux ")
             return  
     
-    with open('fichier_alterer.txt', 'r') as f:
-        for ligne in f:
-         if not ligne.strip():
-            continue
-        
-            candidat, hash_candidat = ligne.strip().rsplit(':',1)
+   with open('fichier_hasher_mod.txt', 'r') as f:
+      for ligne in f:
+         candidat, hash_candidat = ligne.strip().split(':',1)
          if hash_candidat == hash :
             print(f"HAHAAAA ton mot de passe est '{mot_de_passe}', 😝😝😝 trouve quelque chose de mieux ")
             return
-        else: 
-            print("pas trouvé!")
+         
 
-    print("Ton mot de passe a l'air robuste nous n'avons pas pu le trouver")
+   print("Ton mot de passe a l'air robuste nous n'avons pas pu le trouver")
 
 
 
 if __name__ == '__main__':
-   
-   hashFile = hashFilename("rockyou.txt","hash_rockyou.txt")
-   file_mod = fichier_mutation("rockyou.txt")
-   
-   file_mod1 = hashFilename(file_mod, "hash_altere.txt")
 
-   recherche_hash("binta@205",hashFile)
+   
+
+   recherche_hash("rengoku@23")
