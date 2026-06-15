@@ -27,6 +27,37 @@ def hashFilename(filename):
       
 #affichage
 
+def convertir_temps(temps_seconde):
+    secondes = 0
+    minutes = 0
+    heures = 0
+    jour = 0
+    mois = 0
+    annee = 0
+
+    minutes = temps_seconde // 60
+    secondes = temps_seconde % 60
+    if minutes >=60:
+        heures = minutes //60
+        minutes = minutes % 60
+       
+        if heures >=24:
+            jour = heures //24
+            heures = heures % 24
+
+            if jour >=30:
+                mois = jour // 30
+                jour = jour % 30
+
+                if mois >=12:
+                    annee = mois //12
+                    mois = mois % 12
+
+    
+    return f"{annee} ans {mois} mois {jour} jours {heures}heures {minutes} minutes {secondes} secondes "
+
+
+
 def affichage(mot_de_passe):
     longueur = len(mot_de_passe)
 
@@ -71,9 +102,10 @@ def affichage(mot_de_passe):
     print(f"L'entropie estimée de votre mot de passe est: {entropie}")
 
     print("Le temps de cassage estimé est : ")
-    print(f"Pour un PC portable normal : {temps_cassage_CPU}")
-    print(f"Pour une station de gaming avec GPU(RTX 4090): {temps_cassage_GPU}")
-    print(f"Pour un cluster d'attaquant professionnel : {temps_cassage_cluster}")
+    print(f"Pour un PC portable normal : {convertir_temps(temps_cassage_CPU)}")
+    print(f"Pour une station de gaming avec GPU(RTX 4090): {convertir_temps(temps_cassage_GPU)}")
+    print(f"Pour un cluster d'attaquant professionnel : {convertir_temps(temps_cassage_cluster)}")
+            
             
 
 #recherche dans les fichiers 
