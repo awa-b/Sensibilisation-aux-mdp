@@ -18,12 +18,47 @@ document.addEventListener("DOMContentLoaded", () => {
         toggleVisibilityBtn.textContent = isPassword ? "🙈" : "👁️";
     });
 
-    analyzeBtn.addEventListener("click", () => {
+    analyzeBtn.addEventListener("click", async () => {
         const password = passwordInput.value;
         if (!password) return;
 
         resultsSection.classList.remove("hidden");
-        if (lengthSpan) lengthSpan.textContent = password.length;
+
+        const response = await fetch('/analyser', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mot_de_passe: password })
+        });
+
+        const data = await response.json();
+        console.log(data);
+    
+        if (lengthSpan) lengthSpan.textContent = data.longueur;
+        if (document.getElementById('pwd-entropy')) {
+        document.getElementById('pwd-entropy').textContent = data.entropie;
+        }
+        if (document.getElementById('time-laptop')) {
+            document.getElementById('time-laptop').textContent = data.temps_CPU;
+        }
+        if (document.getElementById('time-gpu')) {
+            document.getElementById('time-gpu').textContent = data.temps_GPU;
+        }
+
+        let classesUsed = [];
+        if (data.minuscule) classesUsed.push("a-z");
+        if (data.majuscule) classesUsed.push("A-Z");
+        if (data.chiffre) classesUsed.push("0-9");
+        if (data.car_special) classesUsed.push("Spé");
+        if (classesSpan) classesSpan.textContent = classesUsed.join(", ");
+
+        if (data.trouve) {
+            document.getElementById('top-password-warning').classList.remove('hidden');
+        }
+
+
+
+
+        /*if (lengthSpan) lengthSpan.textContent = password.length;
 
         let classesUsed = [];
         if (/[a-z]/.test(password)) classesUsed.push("a-z");
@@ -33,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (classesSpan) {
             classesSpan.textContent = classesUsed.length > 0 ? classesUsed.join(", ") : "-";
-        }
+        }*/
     });
 
     function updateVerdict(verdictType, reasons, tips) {

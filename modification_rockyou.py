@@ -28,13 +28,17 @@ def hashFilename(filename,fichier_destination):
 #affichage
 
 def convertir_temps(temps_seconde):
+
+    if temps_seconde == 0:
+        return "moins d'une seconde"
+    
     secondes = 0
     minutes = 0
     heures = 0
     jour = 0
     mois = 0
     annee = 0
-
+    
     minutes = temps_seconde // 60
     secondes = temps_seconde % 60
     if minutes >=60:
@@ -52,6 +56,7 @@ def convertir_temps(temps_seconde):
                 if mois >=12:
                     annee = mois //12
                     mois = mois % 12
+    
 
     
     return f"{annee} ans {mois} mois {jour} jours {heures}heures {minutes} minutes {secondes} secondes "
@@ -81,31 +86,18 @@ def affichage(mot_de_passe):
 
     nb_possibilites = taille_alphabet ** longueur
 
-    temps_cassage_CPU = nb_possibilites // 5400000000
-    temps_cassage_GPU = nb_possibilites // 82000000000
-    #pour un cluster de 25 GPU
-    temps_cassage_cluster = nb_possibilites // (82000000000*25)
-
-
-    print("La longueur de votre mot de passe est:", longueur)
-
-    print("Les classes de caractère utilisées sont: ")
-    if minuscule :
-        print("Minuscules")
-    if majuscule:
-        print("Majuscule")
-    if chiffre :
-        print("Chiffres")
-    if car_special:
-        print("Caractère spécial")
-
-    print(f"L'entropie estimée de votre mot de passe est: {entropie}")
-
-    print("Le temps de cassage estimé est : ")
-    print(f"Pour un PC portable normal : {convertir_temps(temps_cassage_CPU)}")
-    print(f"Pour une station de gaming avec GPU(RTX 4090): {convertir_temps(temps_cassage_GPU)}")
-    print(f"Pour un cluster d'attaquant professionnel : {convertir_temps(temps_cassage_cluster)}")
-            
+    
+    return {
+        "longueur": longueur,
+        "minuscule": minuscule,
+        "majuscule": majuscule,
+        "chiffre": chiffre,
+        "car_special": car_special,
+        "entropie": entropie,
+        "temps_CPU": convertir_temps(nb_possibilites // 5400000000),
+        "temps_GPU": convertir_temps(nb_possibilites // 82000000000),
+        "temps_cluster": convertir_temps(nb_possibilites // (82000000000*25))
+    }
             
 
 #recherche dans les fichiers 
@@ -120,22 +112,18 @@ def recherche_hash(mot_de_passe,file):
       for ligne in f:
          candidat, hash_candidat = ligne.strip().rsplit(':',1)
          if hash_candidat == hash :
-            print(f"HAHAAAA ton mot de passe est '{mot_de_passe}', 😝😝😝 trouve quelque chose de mieux ")
-            return  
+            return {"trouve": True, "candidat": candidat} 
     
-    with open('fichier_alterer.txt', 'r') as f:
+    with open('fichier_alterer_hasher.txt', 'r') as f:
         for ligne in f:
-         if not ligne.strip():
-            continue
+            if not ligne.strip():
+                continue
         
             candidat, hash_candidat = ligne.strip().rsplit(':',1)
-         if hash_candidat == hash :
-            print(f"HAHAAAA ton mot de passe est '{mot_de_passe}', 😝😝😝 trouve quelque chose de mieux ")
-            return
-        else: 
-            print("pas trouvé!")
+            if hash_candidat == hash :
+                return {"trouve": True, "candidat": candidat}
+    return {"trouve": False}    
 
-    print("Ton mot de passe a l'air robuste nous n'avons pas pu le trouver")
 
 
 
