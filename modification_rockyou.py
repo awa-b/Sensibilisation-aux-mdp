@@ -13,16 +13,16 @@ def fichier_mutation(fichier_original):
             nouveau_mot = mot_de_passe + i
             mot_final = nouveau_mot + '\n'
             des.write(mot_final)
-   return "fichier_alterer.txt"
+   
 
 
-def hashFilename(filename,fichier_destination):
-   with open(filename, 'r',encoding='utf-8', errors='ignore' ) as f, open(fichier_destination, 'w') as g:
+def hashFilename(filename):
+   with open(filename, 'r',encoding='utf-8', errors='ignore' ) as f, open("fichier_hasher.txt", 'w') as g:
       for line in f:
          s = line.rstrip('\n')
          digest = hashlib.md5(s.encode()).hexdigest()
          g.write(f"{s}:{digest}\n")
-   return fichier_destination
+   
 
       
 #affichage
@@ -105,12 +105,12 @@ def affichage(mot_de_passe):
 def hacher_mdp_md5(mot_de_passe):
    return hashlib.md5(mot_de_passe.encode()).hexdigest()
 
-def recherche_hash(mot_de_passe,file):
-    hash = hacher_mdp_md5(mot_de_passe)
+def recherche_hash(mot_de_passe):
+   hash = hacher_mdp_md5(mot_de_passe)
 
-    with open(file, 'r') as f:
+   with open('fichier_hasher_simple.txt', 'r') as f:
       for ligne in f:
-         candidat, hash_candidat = ligne.strip().rsplit(':',1)
+         candidat, hash_candidat = ligne.strip().split(':',1)
          if hash_candidat == hash :
             return {"trouve": True, "candidat": candidat} 
     
@@ -128,10 +128,7 @@ def recherche_hash(mot_de_passe,file):
 
 
 if __name__ == '__main__':
-   
-   hashFile = hashFilename("rockyou.txt","hash_rockyou.txt")
-   file_mod = fichier_mutation("rockyou.txt")
-   
-   file_mod1 = hashFilename(file_mod, "hash_altere.txt")
 
-   recherche_hash("binta@205",hashFile)
+   
+
+   recherche_hash("rengoku@23")
