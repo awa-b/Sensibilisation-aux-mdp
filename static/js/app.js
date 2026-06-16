@@ -65,7 +65,11 @@ document.addEventListener("DOMContentLoaded", () => {
     // 3. Verdict (après avoir data ET data2)
     if (data2.trouve) {
         warning.classList.remove("hidden");
-        warning.textContent = `⚠️ Ce mot de passe est dans le top ${data2.rang} des mots de passe les plus utilisés au monde !`;
+        if (data2.rang <=14344391){
+            warning.textContent = `⚠️ Ce mot de passe est dans le top ${data2.rang} des mots de passe les plus utilisés au monde !`;
+        } else {
+            warning.textContent = `⚠️ Ce mot de passe est une variation connue d'un mot de passe fréquent !`;
+        }
         status.textContent = "💀 Cassé instantanément par dictionnaire.";
         updateVerdict("faible",
             `Ce mot de passe est faible. Il est connu de tous les attaquants.`,
@@ -97,7 +101,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (secondes < 60) return secondes + " s";
         if (secondes < 3600) return Math.round(secondes / 60) + " min";
         if (secondes < 86400) return Math.round(secondes / 3600) + " h";
-        if (secondes < 31536000) return Math.round(secondes / 86400) + " jours";
+        if (secondes < 2592000) return Math.round(secondes / 86400) + " jours";
+        if (secondes < 31536000) return Math.round(secondes / 2592000) + " mois";
         return Math.round(secondes / 31536000) + " ans";
     }
 

@@ -28,41 +28,6 @@ def hashFilename(filename,name):
       
 #affichage
 
-def convertir_temps(temps_seconde):
-
-    if temps_seconde == 0:
-        return "moins d'une seconde"
-    
-    secondes = 0
-    minutes = 0
-    heures = 0
-    jour = 0
-    mois = 0
-    annee = 0
-    
-    minutes = temps_seconde // 60
-    secondes = temps_seconde % 60
-    if minutes >=60:
-        heures = minutes //60
-        minutes = minutes % 60
-       
-        if heures >=24:
-            jour = heures //24
-            heures = heures % 24
-
-            if jour >=30:
-                mois = jour // 30
-                jour = jour % 30
-
-                if mois >=12:
-                    annee = mois //12
-                    mois = mois % 12
-    
-
-    
-    return f"{annee} ans {mois} mois {jour} jours {heures}heures {minutes} minutes {secondes} secondes "
-
-
 
 def affichage(mot_de_passe):
     longueur = len(mot_de_passe)
@@ -95,9 +60,9 @@ def affichage(mot_de_passe):
         "chiffre": chiffre,
         "car_special": car_special,
         "entropie": entropie,
-        "temps_CPU": convertir_temps(nb_possibilites // 5400000000),
-        "temps_GPU": convertir_temps(nb_possibilites // 82000000000),
-        "temps_cluster": convertir_temps(nb_possibilites // (82000000000*25))
+        "temps_CPU": nb_possibilites // 5400000000,
+        "temps_GPU": nb_possibilites // 82000000000,
+        "temps_cluster": nb_possibilites // (82000000000*25)
     }
             
 
@@ -108,22 +73,25 @@ def hacher_mdp_md5(mot_de_passe):
 
 def recherche_hash(mot_de_passe):
     hash = hacher_mdp_md5(mot_de_passe)
+    tentatives = 0
+    rang = None
 
     with open('fichier_hasher_simple.txt', 'r') as f:
-      for ligne in f:
+      for i, ligne in enumerate(f, 1):
+         tentatives +=1
          candidat, hash_candidat = ligne.strip().split(':',1)
          if hash_candidat == hash :
-            return {"trouve": True, "candidat": candidat} 
+            return {"trouve": True, "candidat": candidat, "tentatives": tentatives, "rang": i} 
     
     with open('fichier_alterer_hasher.txt', 'r') as f:
         for ligne in f:
             if not ligne.strip():
                 continue
-        
+            tentatives +=1
             candidat, hash_candidat = ligne.strip().rsplit(':',1)
             if hash_candidat == hash :
-                return {"trouve": True, "candidat": candidat}
-    return {"trouve": False}    
+                return {"trouve": True, "candidat": candidat, "tentatives" : tentatives, "rang": tentatives}
+    return {"trouve": False, "tentatives": tentatives, "rang": None }    
 
 
 
