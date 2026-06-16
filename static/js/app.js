@@ -2,7 +2,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const passwordInput = document.getElementById("password-input");
     const toggleVisibilityBtn = document.getElementById("toggle-visibility");
     const analyzeBtn = document.getElementById("analyze-btn");
-    const newTestBtn = document.getElementById("new-test-btn"); // Nouveau bouton
     const resultsSection = document.getElementById("results-section");
     const lengthSpan = document.getElementById("pwd-length");
     const classesSpan = document.getElementById("pwd-classes");
@@ -13,7 +12,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const warning = document.getElementById("top-password-warning");
     const status  = document.getElementById("cracking-status");
 
-    let source = null; // Variable pour stocker la connexion en cours
+    let source = null;
+    let startTime = 0;
+    
+    // État pour savoir si on est en train d'afficher un résultat
+    let isAnalysisDone = false; 
 
     toggleVisibilityBtn.addEventListener("click", () => {
         const isPassword = passwordInput.type === "password";
@@ -21,37 +24,42 @@ document.addEventListener("DOMContentLoaded", () => {
         toggleVisibilityBtn.textContent = isPassword ? "🙈" : "👁️";
     });
 
-    analyzeBtn.addEventListener("click", analyser);
+    // --- (ANALYSER -> NOUVELLE ANALYSE) ---
+    analyzeBtn.addEventListener("click", async (event) => {
+        if (isAnalysisDone) {
+            resetInterface();
+            return;
+        }
 
-    // --- NOUVEAU : Logique du bouton "Nouvelle analyse" ---
-    if (newTestBtn) {
-        newTestBtn.addEventListener("click", () => {
-            // 1. Couper la connexion en cours si elle existe
-            if (source) {
-                source.close();
-                source = null;
-            }
-            // 2. Vider le champ de mot de passe
-            passwordInput.value = "";
-            passwordInput.type = "password";
-            toggleVisibilityBtn.textContent = "👁️";
-            
-            // 3. Cacher la section des résultats pour revenir à l'état initial
-            resultsSection.classList.add("hidden");
-        });
-    }
-
-    async function analyser(event) {
         const password = passwordInput.value;
         if (!password) return;
 
-        // --- RÉINITIALISATION DE L'INTERFACE ---
-        // Si une recherche était déjà en cours, on la coupe
+        isAnalysisDone = true;
+        analyzeBtn.textContent = "LANCER UNE NOUVELLE ANALYSE";
+
+        await runAnalysis(event, password);
+    });
+
+    function resetInterface() {
         if (source) {
             source.close();
+            source = null;
         }
+
+        passwordInput.value = "";
+        passwordInput.type = "password";
+        toggleVisibilityBtn.textContent = "👁️";
+        resultsSection.classList.add("hidden");
         
-        // On remet tout à zéro visuellement
+        analyzeBtn.textContent = "ANALYSER";
+        isAnalysisDone = false;
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function runAnalysis(event, password) {
+        if (source) source.close();
+        
         if (warning) warning.classList.add("hidden");
         if (status) status.textContent = "Test des mots du dictionnaire en cours...";
         document.getElementById("attempt-count").textContent = "0";
@@ -63,14 +71,12 @@ document.addEventListener("DOMContentLoaded", () => {
         verdictSpan.textContent = "-";
         mainReasons.textContent = "";
         actionableTips.innerHTML = "";
-        // --------------------------------------------------
 
         resultsSection.classList.remove("hidden");
 
-        // Si le clic vient de l'utilisateur (pas du mode démo simulé)
         if (event && event.isTrusted) {
             
-            // --- 1. Analyse théorique (Instantanée) ---
+            // --- 1. Analyse théorique ---
             const res = await fetch("/analyser", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -90,28 +96,62 @@ document.addEventListener("DOMContentLoaded", () => {
             if (data.car_special) classes.push("Spé");
             if (classesSpan) classesSpan.textContent = classes.join(", ") || "-";
 
-            // --- 2. Attaque en temps réel (Flux SSE) ---
-            // Ouverture de la connexion en flux continu avec Flask
+            // --- 2. GESTION DES MOTS DE PASSE TRÈS FAIBLES (FORCE BRUTE) ---
+            if (data.temps_CPU < 10) {
+                const tempsSimulationMs = Math.max(1500, Math.min(data.temps_CPU * 1000, 5000));
+                
+                source = new EventSource(`/recherche_stream?mot_de_passe=${encodeURIComponent(password)}`);
+                
+                source.onmessage = function(streamEvent) {
+                    const streamData = JSON.parse(streamEvent.data);
+                    if (streamData.type === "progress") {
+                        document.getElementById("attempt-count").textContent = streamData.tentatives.toLocaleString();
+                        document.getElementById("attempt-speed").textContent = streamData.vitesse.toLocaleString();
+                        document.getElementById("current-candidate").textContent = streamData.candidat;
+                    }
+                };
+
+                setTimeout(() => {
+                    if (source) source.close();
+                    
+                    if (crackingProgress) crackingProgress.style.width = "100%";
+                    document.getElementById("current-candidate").textContent = `Cible trouvée : ${password} (Force Brute)`;
+                    status.textContent = "💀 L'attaque par dictionnaire était inutile.";
+                    
+                    warning.classList.remove("hidden");
+                    warning.textContent = `⚠️ Alerte : Votre mot de passe "${password}" a été cassé instantanément. Les programmes testent les combinaisons courtes (Force Brute) en ${formaterTemps(data.temps_CPU)}.`;
+                    
+                    updateVerdict("faible",
+                        "Ce mot de passe est trop court ou trop simple. Il n'offre pas une résistance mathématique suffisante face à une attaque automatisée.",
+                        ["La longueur est la meilleure défense.", "Utilisez au moins 12 caractères mélangés."]
+                    );
+                }, tempsSimulationMs);
+
+                return; 
+            }
+
+            // --- 3. Attaque en temps réel (SSE Classique) ---
+            startTime = Date.now();
             source = new EventSource(`/recherche_stream?mot_de_passe=${encodeURIComponent(password)}`);
 
             source.onmessage = function(streamEvent) {
                 const streamData = JSON.parse(streamEvent.data);
 
-                // A. Mise à jour de l'animation pendant la recherche
                 if (streamData.type === "progress") {
                     document.getElementById("attempt-count").textContent = streamData.tentatives.toLocaleString();
                     document.getElementById("attempt-speed").textContent = streamData.vitesse.toLocaleString();
                     document.getElementById("current-candidate").textContent = streamData.candidat;
                     
-                    // Animation factice de la barre de progression (pour le visuel)
                     if(crackingProgress) {
-                        let pourcentage = Math.min((streamData.tentatives / 200000) * 100, 100);
+                        // Le dictionnaire fait ~14,3 Millions * 10 mutations = 143 Millions d'essais possibles
+                        let pourcentage = Math.min((streamData.tentatives / 143000000) * 100, 100);
                         crackingProgress.style.width = `${pourcentage}%`;
                     }
                 } 
-                // B. Verdict final reçu
                 else if (streamData.type === "result") {
-                    source.close(); // On coupe proprement la connexion réseau
+                    source.close();
+                    
+                    const tempsEcoule = ((Date.now() - startTime) / 1000).toFixed(1);
                     
                     if (streamData.trouve) {
                         if(crackingProgress) crackingProgress.style.width = "100%";
@@ -121,28 +161,44 @@ document.addEventListener("DOMContentLoaded", () => {
                         warning.textContent = `⚠️ Alerte : Votre mot de passe a été trouvé dans le dictionnaire en tant que "${streamData.candidat}".`;
                         status.textContent = "💀 Cassé par attaque dictionnaire.";
                         
-                        updateVerdict("faible",
-                            `Ce mot de passe est faible. Il a été déchiffré en ${streamData.tentatives.toLocaleString()} tentatives.`,
-                            ["Ne jamais utiliser un mot de passe qui a déjà fuité.",
-                             "Utilisez un gestionnaire de mots de passe pour en générer un unique."]
-                        );
+                        // --- EXPLICATION PÉDAGOGIQUE  ---
+                        let explication = `Il a été déchiffré en ${streamData.tentatives.toLocaleString()} tentatives (Temps : ${tempsEcoule} s).`;
+
+                        // Si le mot est théoriquement long (> 1 jour) mais trouvé par le dictionnaire
+                        if (data.temps_CPU > 86400) {
+                            explication += `\n\nL'illusion de la longueur : En théorie, ce mot de passe aurait dû tenir ${formaterTemps(data.temps_CPU)}. Mais parce qu'il utilise des mots du dictionnaire ou un schéma prévisible, l'attaque intelligente l'a pulvérisé.`;
+                        }
+
+                        // Conseils sur mesure
+                        let conseilsSurMesure = [
+                            "Ne recyclez jamais un mot de passe qui a déjà fuité.",
+                            "Privilégiez par exemple les phrases de passe (4 mots aléatoires sans rapport)."
+                        ];
+
+                        if (/\d{4}$/.test(password)) {
+                            conseilsSurMesure.unshift("Évitez d'ajouter une année (ex: 2024) à la fin d'un mot, c'est le premier test des pirates.");
+                        } else if (/^[A-Z][a-z]+/.test(password) && /\d+!?$/.test(password)) {
+                            conseilsSurMesure.unshift("Le schéma 'Majuscule au début + Mot + Chiffres/Symbole à la fin' est trop facile à deviner.");
+                        }
+
+                        updateVerdict("faible", explication, conseilsSurMesure);
+
                     } else {
                         warning.classList.add("hidden");
-                        document.getElementById("current-candidate").textContent = "— Fin du test —";
-                        status.textContent = "✅ Absent de la liste des mots de passe fréquents.";
+                        document.getElementById("current-candidate").textContent = "— Fin du dictionnaire —";
+                        status.textContent = `✅ Absent de la liste complète (Recherche terminée en ${tempsEcoule} s).`;
                         
                         if (data.entropie < 28) {
                             updateVerdict("faible", "Mot de passe trop court ou trop simple.", ["Utilisez au moins 12 caractères.", "Mélangez lettres, chiffres et symboles."]);
                         } else if (data.entropie < 60) {
                             updateVerdict("moyen", "Analyse basée sur l'entropie calculée.", ["Ajoutez des caractères spéciaux.", "Allongez encore un peu votre mot de passe."]);
                         } else {
-                            updateVerdict("robuste", "Votre mot de passe est excellent ! Il résiste aux attaques par dictionnaire locales.", []);
+                            updateVerdict("robuste", "Votre mot de passe est excellent ! Il résiste à nos attaques par dictionnaire.", []);
                         }
                     }
                 }
             };
 
-            // Gestion des erreurs de connexion
             source.onerror = function() {
                 source.close();
                 document.getElementById("current-candidate").textContent = "Erreur de connexion avec le serveur.";
@@ -150,7 +206,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Utilitaires de formatage et d'affichage
     function formaterTemps(secondes) {
         if (!secondes || secondes === 0) return "< 1 s";
         if (secondes < 60) return secondes + " s";
@@ -227,8 +282,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 const data = scenarios[scenario];
                 if (data) {
+                    resetInterface(); // Nettoyer avant le mode démo
                     passwordInput.value = data.pwd;
                     resultsSection.classList.remove("hidden");
+                    
+                    isAnalysisDone = true;
+                    analyzeBtn.textContent = "NOUVELLE ANALYSE";
+                    
                     updateVerdict(data.verdict, data.reasons, data.tips);
                 }
             });
