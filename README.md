@@ -13,26 +13,6 @@ L'application permet à un visiteur de saisir un mot de passe et d'obtenir en te
 
 
 
- Structure du projet
-
-Sensibilisation-aux-mdp/
-├── app.py                    # Serveur Flask 
-├── modification_rockyou.py   # Analyse des mots de passe et recherche dans la wordlist et les mutations
-├── index.html                # Interface utilisateur 
-├── static/
-│   ├── css/
-│   │   └── style.css         # Styles de l'interface
-│   └── js/
-│       └── app.js            # Logique frontend et communication avec le backend
-├── Dockerfile                # Configuration Docker
-├── .dockerignore             # Fichiers exclus de l'image Docker
-├── requirements.txt          # Dépendances Python
-├── .gitignore                # Fichiers ignorés par Git
-└── README.md                 # Ce fichier
-
-
-
-
  Prérequis
 
  Sans Docker
