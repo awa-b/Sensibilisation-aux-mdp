@@ -16,12 +16,13 @@ def fichier_mutation(fichier_original):
    
 
 
-def hashFilename(filename):
-   with open(filename, 'r',encoding='utf-8', errors='ignore' ) as f, open("fichier_hasher.txt", 'w') as g:
+def hashFilename(filename,name):
+   with open(filename, 'r',encoding='utf-8', errors='ignore' ) as f, open(name, 'w') as g:
       for line in f:
          s = line.rstrip('\n')
          digest = hashlib.md5(s.encode()).hexdigest()
          g.write(f"{s}:{digest}\n")
+         
    
 
       
@@ -106,9 +107,9 @@ def hacher_mdp_md5(mot_de_passe):
    return hashlib.md5(mot_de_passe.encode()).hexdigest()
 
 def recherche_hash(mot_de_passe):
-   hash = hacher_mdp_md5(mot_de_passe)
+    hash = hacher_mdp_md5(mot_de_passe)
 
-   with open('fichier_hasher_simple.txt', 'r') as f:
+    with open('fichier_hasher_simple.txt', 'r') as f:
       for ligne in f:
          candidat, hash_candidat = ligne.strip().split(':',1)
          if hash_candidat == hash :
