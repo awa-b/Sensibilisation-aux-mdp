@@ -90,7 +90,7 @@ def generateur_recherche(mot_de_passe_cible: str):
     if len(mot_de_passe_cible) <= 4:
         import itertools
         import string
-        alphabet = string.ascii_letters + string.digits 
+        alphabet = string.ascii_letters + string.digits + string.punctuation 
         
         for longueur in range(1, 5):
             for tentative_tuple in itertools.product(alphabet, repeat=longueur):

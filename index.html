@@ -41,15 +41,35 @@
                                 <span class="label">Classes :</span>
                                 <span class="value" id="pwd-classes">-</span>
                             </li>
-                            <li>
-                                <span class="label">Entropie :</span>
+                            <li style="position: relative;">
+                                <span class="label">Entropie :
+                                    <span class="tooltip-icon">?
+                                        <span class="tooltip-text">L'entropie mesure l'imprévisibilité du mot<br>
+                                            de passe en bits.<br><br>
+                                            Plus elle est élevée, plus il est<br>
+                                            difficile à deviner.<br>
+                                            Elle se calcule selon la formule suivante: <br>
+                                            longueur × log₂(taille de l'alphabet).<br><br>
+                                            La taille de l'alphabet dépend<br>
+                                            des classes de caractères utilisés.
+                                        </span>
+                                    </span>
+                                </span>
                                 <span class="value"><span id="pwd-entropy">0</span> bits</span>
                             </li>
                         </ul>
                     </div>
                     
                     <div class="stat-card">
-                        <h3>Temps de cassage estimé :</h3>
+
+                        <h3>Temps de cassage estimé :
+                            <span class="tooltip-icon">?
+                                <span class="tooltip-text">Temps théorique pour tester toutes les combinaisons possibles. Calculé en divisant le nombre de combinaisons(taille de l'alphabet ^longueur du mot de passe) par la vitesse de chaque profil d'attaquant.<br><br>
+                                Un PC portable classique est équipé d'un CPU : processeur classique, quelques cœurs puissants ~5,4 milliards de tentatives/s.<br><br>
+                                Une station de gaming est équipée d'un GPU : carte graphique avec des milliers de petits cœurs parallèles, bien plus efficace pour ce type de calcul ~82 milliards de tentatives/s.
+                                </span>
+                            </span>
+                        </h3>
                         <ul>
                             <li>
                                 <span class="label">💻 PC portable :</span>
@@ -70,8 +90,15 @@
             </div>
 
             <div id="live-cracking" class="panel">
-                <h2>Attaque en temps réel (MD5)</h2>
-                
+
+                <h2>Attaque en temps réel (MD5)
+                    <span class="tooltip-icon">?
+                        <span class="tooltip-text">Une vraie attaque par dictionnaire est lancée localement sur le hash MD5 de ton mot de passe. Un hash est une empreinte numérique d'un texte : irréversible et unique.<br><br>
+                            MD5 est volontairement choisi car c'est un algorithme de hachage rapide à calculer.L'attaque par dictionnaire teste les mots de passe les plus courants et leurs mutations (majuscules, chiffres, symboles ajoutés).<br><br>
+                            Si ton mot de passe est court (≤ 4 caractères), on tente d'abord une force brute pure (toutes les combinaisons possibles) avant le dictionnaire.
+                        </span>
+                    </span>
+                </h2>
                 <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid rgba(0, 255, 255, 0.2);">
                     <span style="font-size: 0.85em; color: #888;">Hash MD5 :</span><br>
                     <span id="pwd-hash" style="font-family: monospace; color: #0ff; font-size: 0.9em; word-break: break-all;">-</span>
