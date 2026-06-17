@@ -30,6 +30,7 @@
             <div id="theoretical-analysis" class="panel">
                 <h2>Analyse Théorique</h2>
                 <div class="analysis-grid">
+                    
                     <div class="stat-card">
                         <ul>
                             <li>
@@ -46,6 +47,7 @@
                             </li>
                         </ul>
                     </div>
+                    
                     <div class="stat-card">
                         <h3>Temps de cassage estimé :</h3>
                         <ul>
@@ -59,7 +61,9 @@
                             </li>
                         </ul>
                     </div>
+                    
                 </div>
+                
                 <div id="top-password-warning" class="hidden alert">
                     Ce mot de passe est dans le top 10 000 des mots de passe les plus utilisés au monde !
                 </div>
@@ -67,6 +71,12 @@
 
             <div id="live-cracking" class="panel">
                 <h2>Attaque en temps réel (MD5)</h2>
+                
+                <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid rgba(0, 255, 255, 0.2);">
+                    <span style="font-size: 0.85em; color: #888;">Hash MD5 :</span><br>
+                    <span id="pwd-hash" style="font-family: monospace; color: #0ff; font-size: 0.9em; word-break: break-all;">-</span>
+                </div>
+
                 <div class="progress-bar-container">
                     <div id="cracking-progress" class="progress-bar"></div>
                 </div>

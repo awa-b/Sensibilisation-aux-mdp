@@ -15,8 +15,8 @@ document.addEventListener("DOMContentLoaded", () => {
     let source = null;
     let startTime = 0;
     
-    // État pour savoir si on est en train d'afficher un résultat
-    let isAnalysisDone = false; 
+    // État pour éviter le spam de clics
+    let isCurrentlyAnalyzing = false; 
 
     toggleVisibilityBtn.addEventListener("click", () => {
         const isPassword = passwordInput.type === "password";
@@ -24,20 +24,26 @@ document.addEventListener("DOMContentLoaded", () => {
         toggleVisibilityBtn.textContent = isPassword ? "🙈" : "👁️";
     });
 
-    // --- (ANALYSER -> NOUVELLE ANALYSE) ---
+    // --- LOGIQUE DU BOUTON PRINCIPAL (LANCEMENT DIRECT) ---
     analyzeBtn.addEventListener("click", async (event) => {
-        if (isAnalysisDone) {
-            resetInterface();
-            return;
-        }
+        if (isCurrentlyAnalyzing) return; // Empêche de spammer le bouton
 
         const password = passwordInput.value;
-        if (!password) return;
+        if (!password) return; // Si le champ est vide, on ne fait rien
 
-        isAnalysisDone = true;
+        isCurrentlyAnalyzing = true;
         analyzeBtn.textContent = "LANCER UNE NOUVELLE ANALYSE";
+        
+        // Bloque légèrement l'opacité du bouton pendant le calcul réseau
+        analyzeBtn.style.opacity = "0.5"; 
 
-        await runAnalysis(event, password);
+        try {
+            await runAnalysis(event, password);
+        } finally {
+            // Quoi qu'il arrive, on débloque le bouton à la fin
+            isCurrentlyAnalyzing = false;
+            analyzeBtn.style.opacity = "1";
+        }
     });
 
     function resetInterface() {
@@ -51,13 +57,16 @@ document.addEventListener("DOMContentLoaded", () => {
         toggleVisibilityBtn.textContent = "👁️";
         resultsSection.classList.add("hidden");
         
+        const hashSpan = document.getElementById("pwd-hash");
+        if (hashSpan) hashSpan.textContent = "-";
+        
         analyzeBtn.textContent = "ANALYSER";
-        isAnalysisDone = false;
         
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     async function runAnalysis(event, password) {
+        // --- NETTOYAGE IMMÉDIAT DE L'INTERFACE AVANT LA NOUVELLE RECHERCHE ---
         if (source) source.close();
         
         if (warning) warning.classList.add("hidden");
@@ -72,18 +81,24 @@ document.addEventListener("DOMContentLoaded", () => {
         mainReasons.textContent = "";
         actionableTips.innerHTML = "";
 
+        const hashSpan = document.getElementById("pwd-hash");
+        if (hashSpan) hashSpan.textContent = "-"; // On efface l'ancien hash
+
         resultsSection.classList.remove("hidden");
 
         if (event && event.isTrusted) {
             
-            // --- 1. Analyse théorique ---
+            // --- 1. REQUÊTE SÉCURISÉE ---
             const res = await fetch("/analyser", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ mot_de_passe: password })
             });
             const data = await res.json();
+            
+            const tokenSecurise = data.token;
 
+            // Mise à jour du bloc Théorique
             if (lengthSpan) lengthSpan.textContent = data.longueur;
             document.getElementById("pwd-entropy").textContent = data.entropie;
             document.getElementById("time-laptop").textContent = formaterTemps(data.temps_CPU);
@@ -96,11 +111,13 @@ document.addEventListener("DOMContentLoaded", () => {
             if (data.car_special) classes.push("Spé");
             if (classesSpan) classesSpan.textContent = classes.join(", ") || "-";
 
+            if (hashSpan) hashSpan.textContent = data.hash_md5;
+
             // --- 2. GESTION DES MOTS DE PASSE TRÈS FAIBLES (FORCE BRUTE) ---
             if (data.temps_CPU < 10) {
                 const tempsSimulationMs = Math.max(1500, Math.min(data.temps_CPU * 1000, 5000));
                 
-                source = new EventSource(`/recherche_stream?mot_de_passe=${encodeURIComponent(password)}`);
+                source = new EventSource(`/recherche_stream?token=${tokenSecurise}`);
                 
                 source.onmessage = function(streamEvent) {
                     const streamData = JSON.parse(streamEvent.data);
@@ -130,9 +147,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 return; 
             }
 
-            // --- 3. Attaque en temps réel (SSE Classique) ---
+            // --- 3. ATTAQUE EN TEMPS RÉEL SÉCURISÉE (SSE) ---
             startTime = Date.now();
-            source = new EventSource(`/recherche_stream?mot_de_passe=${encodeURIComponent(password)}`);
+            
+            source = new EventSource(`/recherche_stream?token=${tokenSecurise}`);
 
             source.onmessage = function(streamEvent) {
                 const streamData = JSON.parse(streamEvent.data);
@@ -143,7 +161,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     document.getElementById("current-candidate").textContent = streamData.candidat;
                     
                     if(crackingProgress) {
-                        // Le dictionnaire fait ~14,3 Millions * 10 mutations = 143 Millions d'essais possibles
                         let pourcentage = Math.min((streamData.tentatives / 143000000) * 100, 100);
                         crackingProgress.style.width = `${pourcentage}%`;
                     }
@@ -161,22 +178,19 @@ document.addEventListener("DOMContentLoaded", () => {
                         warning.textContent = `⚠️ Alerte : Votre mot de passe a été trouvé dans le dictionnaire en tant que "${streamData.candidat}".`;
                         status.textContent = "💀 Cassé par attaque dictionnaire.";
                         
-                        // --- EXPLICATION PÉDAGOGIQUE  ---
                         let explication = `Il a été déchiffré en ${streamData.tentatives.toLocaleString()} tentatives (Temps : ${tempsEcoule} s).`;
 
-                        // Si le mot est théoriquement long (> 1 jour) mais trouvé par le dictionnaire
                         if (data.temps_CPU > 86400) {
                             explication += `\n\nL'illusion de la longueur : En théorie, ce mot de passe aurait dû tenir ${formaterTemps(data.temps_CPU)}. Mais parce qu'il utilise des mots du dictionnaire ou un schéma prévisible, l'attaque intelligente l'a pulvérisé.`;
                         }
 
-                        // Conseils sur mesure
                         let conseilsSurMesure = [
                             "Ne recyclez jamais un mot de passe qui a déjà fuité.",
                             "Privilégiez par exemple les phrases de passe (4 mots aléatoires sans rapport)."
                         ];
 
                         if (/\d{4}$/.test(password)) {
-                            conseilsSurMesure.unshift("Évitez d'ajouter une année (ex: 2024) à la fin d'un mot, c'est le premier test des pirates.");
+                            conseilsSurMesure.unshift("Évitez d'ajouter une année (ex: 2026) à la fin d'un mot, c'est le premier test des pirates.");
                         } else if (/^[A-Z][a-z]+/.test(password) && /\d+!?$/.test(password)) {
                             conseilsSurMesure.unshift("Le schéma 'Majuscule au début + Mot + Chiffres/Symbole à la fin' est trop facile à deviner.");
                         }
@@ -238,7 +252,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Gestion du Menu Démo pour l'animateur
+    // --- Gestion du Menu Démo pour l'animateur ---
     const demoMenu = document.getElementById("demo-menu");
     const closeDemoBtn = document.getElementById("close-demo");
     const demoBtns = document.querySelectorAll(".demo-btn");
@@ -282,11 +296,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 const data = scenarios[scenario];
                 if (data) {
-                    resetInterface(); // Nettoyer avant le mode démo
+                    resetInterface(); // Utile ici pour tout vider
                     passwordInput.value = data.pwd;
                     resultsSection.classList.remove("hidden");
                     
-                    isAnalysisDone = true;
                     analyzeBtn.textContent = "NOUVELLE ANALYSE";
                     
                     updateVerdict(data.verdict, data.reasons, data.tips);

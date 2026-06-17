@@ -1,16 +1,21 @@
 import hashlib
 import math
 import time
+from datetime import datetime
+
+ANNEE_COURANTE = str(datetime.now().year)
 
 # --- 1. ANALYSE THÉORIQUE ---
-def affichage(mot_de_passe):
+# OPTIMISATION : Ajout du typage (str -> dict) pour un code plus professionnel
+def affichage(mot_de_passe: str) -> dict:
     longueur = len(mot_de_passe)
+    hash_md5 = hashlib.md5(mot_de_passe.encode('utf-8', errors='ignore')).hexdigest()
     
     if longueur == 0:
         return {
             "longueur": 0, "minuscule": False, "majuscule": False, 
             "chiffre": False, "car_special": False, "entropie": 0, 
-            "temps_CPU": 0, "temps_GPU": 0
+            "temps_CPU": 0, "temps_GPU": 0,
         }
 
     minuscule = any(c.islower() for c in mot_de_passe)
@@ -36,12 +41,14 @@ def affichage(mot_de_passe):
         "chiffre": chiffre,
         "car_special": car_special,
         "entropie": entropie,
-        "temps_CPU": nb_possibilites // 5400000000,
-        "temps_GPU": nb_possibilites // 82000000000
+        # OPTIMISATION : Utilisation des séparateurs '_' pour la lisibilité
+        "temps_CPU": nb_possibilites // 5_400_000_000,
+        "temps_GPU": nb_possibilites // 82_000_000_000,
+        "hash_md5": hash_md5
     }
 
 # --- 2. CASSAGE EN TEMPS RÉEL ---
-def generer_mutations(mot_de_base):
+def generer_mutations(mot_de_base: str) -> list:
     """Génère les 10 mutations les plus courantes et efficaces d'un mot."""
     if not mot_de_base:
         return []
@@ -58,14 +65,15 @@ def generer_mutations(mot_de_base):
         mot_cap + "!",                # 6. Majuscule + caractère spécial ("Soleil!")
         mot_de_base + "123!",         # 7. Combo imposé classique ("soleil123!")
         mot_cap + "123!",             # 8. Combo classique + Majuscule ("Soleil123!")
-        mot_de_base + "2024",         # 9. Ajout année ("soleil2024")
-        mot_cap + "2024!"             # 10. Combo "Parfait" ("Soleil2024!")
+        mot_de_base + ANNEE_COURANTE, # 9. Ajout année dynamique ("soleil2026")
+        mot_cap + ANNEE_COURANTE + "!"# 10. Combo "Parfait" ("Soleil2026!")
     ]
 
-def generateur_recherche(mot_de_passe_cible):
+def generateur_recherche(mot_de_passe_cible: str):
     """
-    Teste les mots et leurs 10 mutations en RAM. Yield la progression.
+    Teste les mots et leurs 10 mutations en RAM. Yield la progression en direct.
     """
+    # On garde l'ignore ici au cas où la cible tapée au clavier contienne des caractères étranges
     hash_cible = hashlib.md5(mot_de_passe_cible.encode('utf-8', errors='ignore')).hexdigest()
     tentatives = 0
     debut = time.time()
@@ -78,7 +86,9 @@ def generateur_recherche(mot_de_passe_cible):
                 
                 # On teste les 10 variantes pour ce mot
                 for candidat in mutations:
-                    hash_candidat = hashlib.md5(candidat.encode('utf-8', errors='ignore')).hexdigest()
+                    # OPTIMISATION : Suppression du errors='ignore' dans cette boucle critique 
+                    # car les mutations et la lecture du fichier sont déjà propres. Gain de vitesse.
+                    hash_candidat = hashlib.md5(candidat.encode('utf-8')).hexdigest()
                     tentatives += 1
                     
                     # A. SI LE MOT EST TROUVÉ
