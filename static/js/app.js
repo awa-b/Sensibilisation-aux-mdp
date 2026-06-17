@@ -152,7 +152,14 @@ document.addEventListener("DOMContentLoaded", () => {
               `Cible trouvée : ${streamData.candidat}`;
 
             warning.classList.remove("hidden");
-            warning.textContent = `⚠️  : Votre mot de passe a été trouvé dans le dictionnaire en tant que "${streamData.candidat}".`;
+            
+            // --- NOUVELLE LOGIQUE DYNAMIQUE ---
+            if (streamData.methode === "Force Brute pure") {
+                warning.textContent = `⚠️ Alerte : Le mot de passe "${streamData.candidat}" est trop court. Il a été généré et cassé mathématiquement (Force Brute), sans même utiliser de dictionnaire.`;
+            } else {
+                warning.textContent = `⚠️ Alerte : Votre mot de passe a été trouvé dans le dictionnaire en tant que "${streamData.candidat}".`;
+            }
+            
             status.textContent = `💀 Cassé par : ${streamData.methode}`;
 
             let explication = `Il a été déchiffré en ${streamData.tentatives.toLocaleString()} tentatives (Temps : ${tempsEcoule} s).`;
