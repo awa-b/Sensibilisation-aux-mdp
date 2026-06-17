@@ -64,4 +64,4 @@ if __name__ == '__main__':
     print("🚀 Démarrage du serveur...")
     print("Ouvrez http://127.0.0.1:5000 dans votre navigateur")
     print("="*50 + "\n")
-    app.run(debug=True)
+    app.run(host='0.0.0.0', debug=True)
