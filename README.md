@@ -84,6 +84,7 @@ https://drive.google.com/file/d/1OhN4kPLHHObmdxKh-w9n7N9Pm_BQU5jW/view
 
 
 docker build -t sensibilisation-mdp .
+
 docker run -p 5000:5000 sensibilisation-mdp
 
 
