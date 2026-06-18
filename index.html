@@ -30,7 +30,7 @@
             <div id="theoretical-analysis" class="panel">
                 <h2>Analyse Théorique</h2>
                 <div class="analysis-grid">
-                    
+
                     <div class="stat-card">
                         <ul>
                             <li>
@@ -59,14 +59,19 @@
                             </li>
                         </ul>
                     </div>
-                    
+
                     <div class="stat-card">
 
                         <h3>Temps de cassage estimé :
                             <span class="tooltip-icon">?
-                                <span class="tooltip-text">Temps théorique pour tester toutes les combinaisons possibles. Calculé en divisant le nombre de combinaisons(taille de l'alphabet ^longueur du mot de passe) par la vitesse de chaque profil d'attaquant.<br><br>
-                                Un PC portable classique est équipé d'un CPU : processeur classique, quelques cœurs puissants ~5,4 milliards de tentatives/s.<br><br>
-                                Une station de gaming est équipée d'un GPU : carte graphique avec des milliers de petits cœurs parallèles, bien plus efficace pour ce type de calcul ~82 milliards de tentatives/s.
+                                <span class="tooltip-text">Temps théorique pour tester toutes les combinaisons
+                                    possibles. Calculé en divisant le nombre de combinaisons(taille de l'alphabet
+                                    ^longueur du mot de passe) par la vitesse de chaque profil d'attaquant.<br><br>
+                                    Un PC portable classique est équipé d'un CPU : processeur classique, quelques cœurs
+                                    puissants ~5,4 milliards de tentatives/s.<br><br>
+                                    Une station de gaming est équipée d'un GPU : carte graphique avec des milliers de
+                                    petits cœurs parallèles, bien plus efficace pour ce type de calcul ~82 milliards de
+                                    tentatives/s.
                                 </span>
                             </span>
                         </h3>
@@ -81,9 +86,9 @@
                             </li>
                         </ul>
                     </div>
-                    
+
                 </div>
-                
+
                 <div id="top-password-warning" class="hidden alert">
                     Ce mot de passe est dans le top 10 000 des mots de passe les plus utilisés au monde !
                 </div>
@@ -93,15 +98,22 @@
 
                 <h2>Attaque en temps réel (MD5)
                     <span class="tooltip-icon">?
-                        <span class="tooltip-text">Une vraie attaque par dictionnaire est lancée localement sur le hash MD5 de ton mot de passe. Un hash est une empreinte numérique d'un texte : irréversible et unique.<br><br>
-                            MD5 est volontairement choisi car c'est un algorithme de hachage rapide à calculer.L'attaque par dictionnaire teste les mots de passe les plus courants et leurs mutations (majuscules, chiffres, symboles ajoutés).<br><br>
-                            Si ton mot de passe est court (≤ 4 caractères), on tente d'abord une force brute pure (toutes les combinaisons possibles) avant le dictionnaire.
+                        <span class="tooltip-text">Une vraie attaque par dictionnaire est lancée localement sur le hash
+                            MD5 de ton mot de passe. Un hash est une empreinte numérique d'un texte : irréversible et
+                            unique.<br><br>
+                            MD5 est volontairement choisi car c'est un algorithme de hachage rapide à calculer.L'attaque
+                            par dictionnaire teste les mots de passe les plus courants et leurs mutations (majuscules,
+                            chiffres, symboles ajoutés).<br><br>
+                            Si ton mot de passe est court (≤ 4 caractères), on tente d'abord une force brute pure
+                            (toutes les combinaisons possibles) avant le dictionnaire.
                         </span>
                     </span>
                 </h2>
-                <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid rgba(0, 255, 255, 0.2);">
+                <div
+                    style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid rgba(0, 255, 255, 0.2);">
                     <span style="font-size: 0.85em; color: #888;">Hash MD5 :</span><br>
-                    <span id="pwd-hash" style="font-family: monospace; color: #0ff; font-size: 0.9em; word-break: break-all;">-</span>
+                    <span id="pwd-hash"
+                        style="font-family: monospace; color: #0ff; font-size: 0.9em; word-break: break-all;">-</span>
                 </div>
 
                 <div class="progress-bar-container">
@@ -110,7 +122,20 @@
                 <p>Tentatives : <span id="attempt-count">0</span> | Vitesse : <span id="attempt-speed">0</span>/s</p>
                 <p class="scrolling-candidates" id="current-candidate">testing...</p>
                 <p id="cracking-status" class="status-message"></p>
+                <div id="crack-details" class="hidden"
+                    style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(0, 255, 255, 0.2);">
+                    <p>🔑 <span style="font-size: 0.85em; color: #888;">Hash MD5  :</span> <span id="hash-cible" style="font-family: monospace; color: #0ff; font-size: 0.9em; word-break: break-all;"></span> </p>
+                    <p>✅ Candidat : <span id="candidat-trouve" style="font-family: monospace;"></span></p>
+                    <p>📍 Position : <span id="position-trouve"></span></p>
+                </div>
+
+
+
+
             </div>
+            </div>
+
+
 
             <div id="pedagogy" class="panel">
                 <h2>Verdict : <span id="final-verdict">-</span></h2>

@@ -49,24 +49,33 @@ def affichage(mot_de_passe: str) -> dict:
     }
 
 # --- 2. CASSAGE EN TEMPS RÉEL ---
-def generer_mutations(mot_de_base: str) -> list:
-    """Génère uniquement les mutations (le mot de base a déjà été testé)."""
-    if not mot_de_base:
+def generer_mutations(mot: str, caracteres_speciaux: list = None) -> list:
+   
+    if not mot:
         return []
-        
-    mot_cap = mot_de_base.capitalize()
     
-    return [
-        mot_cap,                      # 1. Première lettre majuscule ("Soleil")
-        mot_de_base + "123",          # 2. Ajout suite de chiffres ("soleil123")
-        mot_cap + "123",              # 3. Majuscule + suite de chiffres ("Soleil123")
-        mot_de_base + "!",            # 4. Ajout caractère spécial classique ("soleil!")
-        mot_cap + "!",                # 5. Majuscule + caractère spécial ("Soleil!")
-        mot_de_base + "123!",         # 6. Combo imposé classique ("soleil123!")
-        mot_cap + "123!",             # 7. Combo classique + Majuscule ("Soleil123!")
-        mot_de_base + ANNEE_COURANTE, # 8. Ajout année dynamique ("soleil2026")
-        mot_cap + ANNEE_COURANTE + "!"# 9. Combo "Parfait" ("Soleil2026!")
-    ]
+    if caracteres_speciaux is None:
+        caracteres_speciaux = ['&', '@', '#', '!']
+        
+    
+    mot_cap = mot.capitalize()
+    mot_leet = mot.lower().replace("a", "@")
+    mot_cap_leet = mot_cap.replace("a", "@")
+    
+    
+    mutations = [mot_cap, mot_leet, mot_cap_leet]
+    
+    
+    suffixes = caracteres_speciaux + ["123", "2026", "2026!","2025","2010"]
+    
+    for suffixe in suffixes:
+        mutations.append(mot + suffixe)
+        mutations.append(mot_cap + suffixe)
+        mutations.append(mot_leet + suffixe)
+        mutations.append(mot_cap_leet + suffixe)
+        
+    # Élimine les doublons potentiels si le mot de base ne change pas au replace
+    return list(set(mutations))
 
 def generateur_recherche(mot_de_passe_cible: str):
     hash_cible = hashlib.md5(mot_de_passe_cible.encode('utf-8', errors='ignore')).hexdigest()
@@ -144,8 +153,15 @@ def generateur_recherche(mot_de_passe_cible: str):
                     tentatives += 1
                     
                     if hash_candidat == hash_cible:
-                        yield {"type": "result", "trouve": True, "candidat": candidat, "tentatives": tentatives, "methode": "Dictionnaire + Mutation intelligente"}
-                        return 
+                        yield {
+                            "type": "result",
+                            "trouve": True,
+                            "candidat": candidat,
+                            "mot_base": mot_de_base,
+                            "tentatives": tentatives,
+                            "methode": "Dictionnaire + Mutation intelligente"
+                        }
+                        return
                         
                     progression = envoyer_progression(tentatives, candidat)
                     if progression: yield progression

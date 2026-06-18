@@ -66,7 +66,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function runAnalysis(event, password) {
-    // --- NETTOYAGE IMMÉDIAT DE L'INTERFACE AVANT LA NOUVELLE RECHERCHE ---
     if (source) source.close();
 
     if (warning) warning.classList.add("hidden");
@@ -74,8 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
       status.textContent = "Test des mots du dictionnaire en cours...";
     document.getElementById("attempt-count").textContent = "0";
     document.getElementById("attempt-speed").textContent = "0";
-    document.getElementById("current-candidate").textContent =
-      "Démarrage de l'attaque...";
+    document.getElementById("current-candidate").textContent = "Démarrage de l'attaque...";
     if (crackingProgress) crackingProgress.style.width = "0%";
 
     verdictSpan.className = "";
@@ -84,32 +82,30 @@ document.addEventListener("DOMContentLoaded", () => {
     actionableTips.innerHTML = "";
 
     const hashSpan = document.getElementById("pwd-hash");
-    if (hashSpan) hashSpan.textContent = "-"; // On efface l'ancien hash
+    if (hashSpan) hashSpan.textContent = "-";
+
+    // Cacher les détails du crack au départ
+    const crackDetails = document.getElementById("crack-details");
+    if (crackDetails) crackDetails.classList.add("hidden");
 
     resultsSection.classList.remove("hidden");
 
     if (event && event.isTrusted) {
-      // --- 1. ENVOI DU MOT DE PASSE AU SERVEUR POUR ANALYSE ---
       const res = await fetch("/analyser", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mot_de_passe: password }),
       });
-      const data = await res.json();// --- 2. RÉCEPTION DES DONNÉES DU SERVEUR ---
+      const data = await res.json();
 
-      const tokenSecurise = data.token;//
+      const tokenSecurise = data.token;
 
-      // Mise à jour du bloc Théorique
       if (lengthSpan) lengthSpan.textContent = data.longueur;
       document.getElementById("pwd-entropy").textContent = data.entropie;
-      document.getElementById("time-laptop").textContent = formaterTemps(
-        data.temps_CPU,
-      );
-      document.getElementById("time-gpu").textContent = formaterTemps(
-        data.temps_GPU,
-      );
+      document.getElementById("time-laptop").textContent = formaterTemps(data.temps_CPU);
+      document.getElementById("time-gpu").textContent = formaterTemps(data.temps_GPU);
 
-      const classes = [];// On construit la liste des classes de caractères utilisées
+      const classes = [];
       if (data.minuscule) classes.push("a-z");
       if (data.majuscule) classes.push("A-Z");
       if (data.chiffre) classes.push("0-9");
@@ -118,7 +114,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (hashSpan) hashSpan.textContent = data.hash_md5;
 
-      // --- 3. ATTAQUE EN TEMPS RÉEL SÉCURISÉE (SSE) ---
       startTime = Date.now();
 
       source = new EventSource(`/recherche_stream?token=${tokenSecurise}`);
@@ -136,11 +131,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
           if (crackingProgress) {
             let pourcentage = Math.min(
-              (streamData.tentatives / 143000000) * 100,
-              100,
+              (streamData.tentatives / 143000000) * 100, 100,
             );
             crackingProgress.style.width = `${pourcentage}%`;
           }
+
         } else if (streamData.type === "result") {
           source.close();
 
@@ -152,19 +147,37 @@ document.addEventListener("DOMContentLoaded", () => {
               `Cible trouvée : ${streamData.candidat}`;
 
             warning.classList.remove("hidden");
-            
-            // --- NOUVELLE LOGIQUE DYNAMIQUE ---
+
             if (streamData.methode === "Force Brute pure") {
-                warning.textContent = `⚠️ Alerte : Le mot de passe "${streamData.candidat}" est trop court. Il a été généré et cassé mathématiquement (Force Brute), sans même utiliser de dictionnaire.`;
+              warning.textContent = `⚠️ Alerte : Le mot de passe "${streamData.candidat}" est trop court. Il a été généré et cassé mathématiquement (Force Brute), sans même utiliser de dictionnaire.`;
             } else {
-                warning.textContent = `⚠️ Alerte : Votre mot de passe a été trouvé dans le dictionnaire en tant que "${streamData.candidat}".`;
+              warning.textContent = `⚠️ Alerte : Votre mot de passe a été trouvé dans le dictionnaire en tant que "${streamData.candidat}".`;
             }
-            
+
             status.textContent = `💀 Cassé par : ${streamData.methode}`;
+
+            // ── AFFICHAGE HASH + CANDIDAT + POSITION ──
+            if (crackDetails) {
+              crackDetails.classList.remove("hidden");
+              document.getElementById("hash-cible").textContent = data.hash_md5;
+              document.getElementById("candidat-trouve").textContent = `"${streamData.candidat}"`;
+              if (streamData.rang) {
+                const msg = streamData.rang <= 10000
+                  ? `#${streamData.rang.toLocaleString()} dans le top 10 000 des mots de passe les plus utilisés`
+                  : `Présent dans la base rockyou (position #${streamData.rang.toLocaleString()})`;
+                document.getElementById("position-trouve").textContent = msg;
+              } else if (streamData.mot_base) {
+                document.getElementById("position-trouve").textContent =
+                  `Mot du dictionnaire : "${streamData.mot_base}" → muté en "${streamData.candidat}"`;
+              } else {
+                document.getElementById("position-trouve").textContent =
+                  `Trouvé après ${streamData.tentatives.toLocaleString()} tentatives`;
+              }
+            }
 
             let explication = `Il a été déchiffré en ${streamData.tentatives.toLocaleString()} tentatives (Temps : ${tempsEcoule} s).`;
             if (streamData.rang) {
-              explication += `\n\n🚨  : Ce mot de passe est le n° ${streamData.rang.toLocaleString()} des mots de passe les plus utilisés au monde !\n\n`;
+              explication += `\n\n🚨 Ce mot de passe est le n° ${streamData.rang.toLocaleString()} des mots de passe les plus utilisés au monde !\n\n`;
             }
 
             if (data.temps_CPU > 86400) {
@@ -180,51 +193,53 @@ document.addEventListener("DOMContentLoaded", () => {
               conseilsSurMesure.unshift(
                 "Évitez d'ajouter une année (ex: 2026) à la fin d'un mot, c'est le premier test des pirates.",
               );
-            } else if (
-              /^[A-Z][a-z]+/.test(password) &&
-              /\d+!?$/.test(password)
-            ) {
+            } else if (/^[A-Z][a-z]+/.test(password) && /\d+!?$/.test(password)) {
               conseilsSurMesure.unshift(
                 "Le schéma 'Majuscule au début + Mot + Chiffres/Symbole à la fin' est trop facile à deviner.",
               );
             }
 
             updateVerdict("faible", explication, conseilsSurMesure);
+
           } else {
+            // Mot de passe non trouvé
+            if (crackDetails) crackDetails.classList.add("hidden");
+
             warning.classList.add("hidden");
-            document.getElementById("current-candidate").textContent =
-              "— Fin du dictionnaire —";
+            document.getElementById("current-candidate").textContent = "— Fin du dictionnaire —";
             status.textContent = `✅ Absent de la liste complète (Recherche terminée en ${tempsEcoule} s).`;
 
             if (data.entropie < 28) {
-              updateVerdict(
-                "faible",
-                "Mot de passe trop court ou trop simple.",
-                [
-                  "Utilisez au moins 12 caractères.",
-                  "Mélangez lettres, chiffres et symboles.",
-                ],
-              );
+              updateVerdict("faible", "Mot de passe trop court ou trop simple.", [
+                "Utilisez au moins 12 caractères.",
+                "Mélangez lettres, chiffres et symboles.",
+              ]);
             } else if (data.entropie < 60) {
               updateVerdict("moyen", "Analyse basée sur l'entropie calculée.", [
                 "Ajoutez des caractères spéciaux.",
                 "Allongez encore un peu votre mot de passe.",
               ]);
             } else {
+              const raisons = [];
+              if (data.longueur >= 16) raisons.push(`longueur excellente (${data.longueur} caractères)`);
+              else if (data.longueur >= 12) raisons.push(`longueur suffisante (${data.longueur} caractères)`);
+
+              if (data.minuscule && data.majuscule) raisons.push("mélange minuscules et majuscules");
+              if (data.chiffre) raisons.push("contient des chiffres");
+              if (data.car_special) raisons.push("contient des caractères spéciaux");
+              if (data.entropie >= 80) raisons.push(`entropie très élevée (${data.entropie} bits)`);
+              else raisons.push(`entropie correcte (${data.entropie} bits)`);
+
+              const explicationRobuste = `Votre mot de passe résiste à nos attaques car : ${raisons.join(", ")}.`;
+
               updateVerdict(
                 "robuste",
-                "Votre mot de passe est excellent ! Il résiste à nos attaques par dictionnaire.",
-                [],
+                explicationRobuste,
+                []
               );
             }
           }
         }
-      };
-
-      source.onerror = function () {
-        source.close();
-        document.getElementById("current-candidate").textContent =
-          "Erreur de connexion avec le serveur.";
       };
     }
   }
