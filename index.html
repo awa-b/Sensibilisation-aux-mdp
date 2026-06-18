@@ -44,14 +44,16 @@
                             <li style="position: relative;">
                                 <span class="label">Entropie :
                                     <span class="tooltip-icon">?
-                                        <span class="tooltip-text">L'entropie mesure l'imprévisibilité du mot<br>
-                                            de passe en bits.<br><br>
-                                            Plus elle est élevée, plus il est<br>
-                                            difficile à deviner.<br>
-                                            Elle se calcule selon la formule suivante: <br>
-                                            longueur × log₂(taille de l'alphabet).<br><br>
-                                            La taille de l'alphabet dépend<br>
-                                            des classes de caractères utilisés.
+                                        <span class="tooltip-text">L'entropie mesure l'imprévisibilité du mot de passe en bits.<br><br>
+                                            Plus elle est élevée, plus il est difficile à deviner.<br>
+                                            Elle se calcule selon la formule suivante:<br>
+                                            longueur × log₂(taille de l'alphabet).<br>
+                                            La taille de l'alphabet dépend des classes de caractères utilisés.<br><br>
+                                            28 bits → Très faible : cassé en quelques secondes<br>
+                                            28–35 bits → Faible : cassé en quelques minutes<br>
+                                            36–59 bits → Moyen : correcte pour comptes peu sensibles<br>
+                                            60–127 bits → Fort : résiste même à un cluster de 25 GPU<br>
+                                            128 bits+ → Très fort : milliards d'années pour casser
                                         </span>
                                     </span>
                                 </span>
