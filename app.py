@@ -59,32 +59,7 @@ def recherche_stream():
                 
     return Response(generate(), mimetype='text/event-stream')
 
-@app.route('/recherche', methods=['POST'])
-def recherche():
-    mdp = request.get_json()['mot_de_passe']
-    hash_md5 = hacher_mdp_md5(mdp)
-    rang = None
-    tentatives = 0
-    candidat_trouve = None
 
-    with open('fichier_hasher_simple.txt', 'r') as f:
-        for i, ligne in enumerate(f, 1):
-            tentatives += 1
-            candidat, hash_candidat = ligne.strip().split(':', 1)
-            if hash_candidat == hash_md5:
-                rang = i
-                candidat_trouve = candidat
-                break
-
-    vitesse = 500000
-    return jsonify({
-        "trouve": rang is not None,
-        "rang": rang,
-        "tentatives": tentatives,
-        "vitesse": vitesse,
-        "hash": hash_md5,
-        "candidat": candidat_trouve
-    })
 
 if __name__ == '__main__':
     print("\n" + "="*50)
