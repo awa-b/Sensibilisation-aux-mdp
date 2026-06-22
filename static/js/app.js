@@ -131,7 +131,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
           if (crackingProgress) {
             let pourcentage = Math.min(
-              (streamData.tentatives / 143000000) * 100, 100,
+              (streamData.tentatives / 159000000) * 100, 100,
             );
             crackingProgress.style.width = `${pourcentage}%`;
           }
@@ -245,12 +245,37 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function formaterTemps(secondes) {
-    if (!secondes || secondes === 0) return "< 1 s";
-    if (secondes < 60) return secondes + " s";
+    // 1. Sécurité absolue pour les nombres infinis ou astronomiques
+    if (secondes === Infinity || secondes >= 3.1536e16) {
+      return "> 1 milliard d'années";
+    }
+
+    // 2. Unités très courtes
+    if (!secondes || isNaN(secondes) || secondes <= 0) return "< 1 s";
+    if (secondes < 60) return Math.round(secondes) + " s";
     if (secondes < 3600) return Math.round(secondes / 60) + " min";
     if (secondes < 86400) return Math.round(secondes / 3600) + " h";
-    if (secondes < 2592000) return Math.round(secondes / 86400) + " jours";
-    return Math.round(secondes / 31536000) + " ans";
+    if (secondes < 31536000) return Math.round(secondes / 86400) + " jours";
+
+    // 3. Calcul des années
+    let annees = Math.round(secondes / 31536000);
+
+    // 4. Logique d'arrondi ergonomique pour ne pas casser le design (UI friendly)
+    if (annees >= 1000000000) {
+      return "> 1 milliard d'années";
+    } else if (annees >= 1000000) {
+      let millions = Math.floor(annees / 1000000);
+      return "> " + millions.toLocaleString("fr-FR") + " millions d'années";
+    } else if (annees >= 1000) {
+      let milliers = Math.floor(annees / 1000) * 1000;
+      return "> " + milliers.toLocaleString("fr-FR") + " ans";
+    } else if (annees > 100) {
+      let centaines = Math.floor(annees / 100) * 100;
+      return "> " + centaines + " ans";
+    }
+
+    // Si on est entre 1 an et 100 ans, on affiche le chiffre exact
+    return annees + " ans";
   }
 
   function updateVerdict(verdictType, reasons, tips) {

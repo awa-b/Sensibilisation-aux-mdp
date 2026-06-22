@@ -49,13 +49,12 @@ def affichage(mot_de_passe: str) -> dict:
     }
 
 # --- 2. CASSAGE EN TEMPS RÉEL ---
-def generer_mutations(mot: str, caracteres_speciaux: list = None) -> list:
+def generer_mutations(mot: str) -> list:
    
     if not mot:
         return []
     
-    if caracteres_speciaux is None:
-        caracteres_speciaux = ['&', '@', '#', '!']
+
         
     
     mot_cap = mot.capitalize()
@@ -66,7 +65,7 @@ def generer_mutations(mot: str, caracteres_speciaux: list = None) -> list:
     mutations = [mot_cap, mot_leet, mot_cap_leet]
     
     
-    suffixes = caracteres_speciaux + ["123", "2026", "2026!","2025","2010"]
+    suffixes = ["123","2010!","2010"]
     
     for suffixe in suffixes:
         mutations.append(mot + suffixe)
